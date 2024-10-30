@@ -1,15 +1,22 @@
+#define _USE_MATH_DEFINES
+
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW\glfw3.h>
 #include <windows.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <math.h>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"uniform mat4 model;\n"
 "void main()\n"
 "{\n"
-"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   gl_Position = model * vec4(aPos, 1.0);\n"
 "}\0";
 const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
@@ -73,13 +80,18 @@ void draw(std::string what)
 	glClear(GL_COLOR_BUFFER_BIT);
 	glBindVertexArray(vertexArrayObject);
 	glUseProgram(shaderProgram);
+	double t = glfwGetTime();
+	float sinWave = 0.5f * sin(1.5f * M_PI * 2.4f * t + 0.1f);
+	glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-sinWave, sinWave, 0.0f));
 	if (what == "triangle")
 	{
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix));
 		glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVerticies), triangleVerticies, GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else if (what == "square")
 	{
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix));
 		glBufferData(GL_ARRAY_BUFFER, sizeof(squareVerticies), squareVerticies, GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDrawArrays(GL_TRIANGLES, 1, 3);
