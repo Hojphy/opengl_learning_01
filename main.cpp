@@ -82,16 +82,17 @@ void draw(std::string what)
 	glUseProgram(shaderProgram);
 	double t = glfwGetTime();
 	float sinWave = 0.5f * sin(1.5f * M_PI * 2.4f * t + 0.1f);
-	glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-sinWave, sinWave, 0.0f));
+	glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, sinWave, 0.0f));
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(sinWave, sinWave, 0.0f));
 	if (what == "triangle")
 	{
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix));
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
 		glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVerticies), triangleVerticies, GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else if (what == "square")
 	{
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix));
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
 		glBufferData(GL_ARRAY_BUFFER, sizeof(squareVerticies), squareVerticies, GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDrawArrays(GL_TRIANGLES, 1, 3);
