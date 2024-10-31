@@ -19,9 +19,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 GLfloat verticies[] = {
 		//triangle
 		
-		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
+		//-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
+		//0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
+		//0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
 		
 		//square
 		
@@ -56,8 +56,8 @@ GLuint squareIndices[] = {
 	4, 7, 8,
 
 	// Top face
-	//5, 6, 9,
-	//6, 10, 9,
+	5, 6, 9,
+	6, 10, 9,
 
 	// Back face
 	7, 8, 9,
@@ -87,6 +87,7 @@ GLuint edgeIndices[] = {
 std::string whatToDraw;
 
 VAO* vao;
+VAO* edgeVao;
 VBO* vbo;
 EBO* ebo;
 EBO* edgeEbo;
@@ -100,15 +101,17 @@ void initializeVerticies()
 
 	ebo = new EBO(squareIndices, sizeof(squareIndices));
 	ebo->Bind();
+	vao->LinkVBO(*vbo, 0);
+	vao->Unbind();
+	ebo->Unbind();
+	edgeVao = new VAO();
 
 	edgeEbo = new EBO(edgeIndices, sizeof(edgeIndices));
 	edgeEbo->Bind();
+	edgeVao->LinkVBO(*vbo, 0);
 
-	vao->LinkVBO(*vbo, 0);
-	vao->Unbind();
 	vbo->Unbind();
-	ebo->Unbind();
-	ebo->Unbind();
+	edgeEbo->Unbind();
 }
 
 void draw(std::string what)
@@ -138,24 +141,29 @@ void draw(std::string what)
 	glm::mat4 mvp = Projection * View * Model;
 
 	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(mvp));
-	vao->Bind();
 	if (what == "triangle")
 	{
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else if (what == "square")
 	{
-		//glDrawElements(GL_TRIANGLES, sizeof(squareIndices), GL_UNSIGNED_INT, nullptr);
+		vao->Bind();
+		glDrawElements(GL_TRIANGLES, sizeof(squareIndices), GL_UNSIGNED_INT, nullptr);
 		//glColor3f(0.8f, 0.3f, 0.02f);
 		float myColor[] = { sinWave, 0.5f, sinWave, 1.0f };
 		GLint colorLocation = glGetUniformLocation(shader->ID, "color");
 		glUniform4fv(colorLocation, 1, myColor);
+		vao->Unbind();
+		edgeVao->Bind();
 
 		glDrawElements(GL_LINES, sizeof(edgeIndices), GL_UNSIGNED_INT, (void*)0);
+		float myColor2[] = { -sinWave, 0.8f, -sinWave, 1.0f };
+		colorLocation = glGetUniformLocation(shader->ID, "color");
+		glUniform4fv(colorLocation, 1, myColor2);
 
 		glLineWidth(2.0f);
+		edgeVao->Unbind();
 	}
-	vao->Unbind();
 }
 
 int main()
