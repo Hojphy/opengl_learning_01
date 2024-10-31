@@ -18,19 +18,57 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 GLfloat verticies[] = {
 		//triangle
-		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
+		
+		//-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
+		//0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
+		//0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
+		
 		//square
-		-0.5f, -0.5f, 0.0f,
-		0.5f, -0.5f, 0.0f,
-		-0.5f,  0.5f, 0.0f,
-		0.5f,  0.5f, 0.0f
+		
+		// Front face
+		-0.5f, -0.5f,  0.5f, // Bottom left
+		 0.5f, -0.5f,  0.5f, // Bottom right
+		-0.5f,  0.5f,  0.5f, // Top left
+		 0.5f,  0.5f,  0.5f, // Top right
+
+		 // Back face
+		 -0.5f, -0.5f, -0.5f, // Bottom left
+		  0.5f, -0.5f, -0.5f, // Bottom right
+		 -0.5f,  0.5f, -0.5f, // Top left
+		  0.5f,  0.5f, -0.5f  // Top right
 };
+
+GLuint squareIndices[] = {
+	// Front face
+	0, 1, 2,
+	1, 3, 2,
+
+	// Back face
+	4, 6, 5,
+	5, 6, 7,
+
+	// Left face
+	4, 2, 6,
+	2, 6, 7,
+
+	// Right face
+	1, 5, 3,
+	3, 5, 7,
+
+	// Top face
+	2, 3, 6,
+	3, 7, 6,
+
+	// Bottom face
+	4, 5, 0,
+	0, 1, 5
+};
+
 std::string whatToDraw;
 
 VAO* vao;
 VBO* vbo;
+EBO* ebo;
 Shader* shader;
 
 void initializeVerticies()
@@ -39,11 +77,13 @@ void initializeVerticies()
 	vbo = new VBO(verticies, sizeof(verticies));
 	vao->Bind();
 
-	VBO temp();
+	ebo = new EBO(squareIndices, sizeof(squareIndices));
+	ebo->Bind();
 
 	vao->LinkVBO(*vbo, 0);
 	vao->Unbind();
 	vbo->Unbind();
+	ebo->Unbind();
 }
 
 void draw(std::string what)
@@ -51,19 +91,36 @@ void draw(std::string what)
 	glClear(GL_COLOR_BUFFER_BIT);
 	shader->Activate();
 	double t = glfwGetTime();
-	float sinWave = 0.5f * sin(1.5f * M_PI * 2.4f * t + 0.1f);
-	glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, sinWave, 0.0f));
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(sinWave, sinWave, 0.0f));
-	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
+	float sinWave = 1.5f * sin(1.5f * M_PI * 2.4f * t + 0.1f);
+	glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
+
+	glm::mat4 Model = glm::mat4(1.0f);
+
+	glm::mat4 View = glm::lookAt(
+		glm::vec3(sinWave, 0, -3), // Camera viewpoint pos
+		glm::vec3(0, 0, 0),		   // Looking pos
+		glm::vec3(0, 1, 0)		   // Up direction
+	);
+
+	glm::mat4 Projection = glm::perspective(
+		glm::radians(45.0f), //FoV
+		4.0f / 3.0f,         //Aspect Ratio
+		0.1f,                //Near clipping plane
+		100.0f               //Far clipping plane
+	);
+
+	glm::mat4 mvp = Projection * View * Model;
+
+	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(mvp));
 	vao->Bind();
 	if (what == "triangle")
 	{
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else if (what == "square")
 	{
-		glDrawArrays(GL_TRIANGLES, 3, 3);
-		glDrawArrays(GL_TRIANGLES, 4, 3);
+		glDrawElements(GL_TRIANGLES, sizeof(squareIndices) / sizeof(squareIndices[0]), GL_UNSIGNED_INT, nullptr);
 	}
 	vao->Unbind();
 }
@@ -100,14 +157,7 @@ int main()
 
 	while (!glfwWindowShouldClose(window))
 	{
-		if (whatToDraw == "triangle")
-		{
-			draw("triangle");
-		}
-		else if (whatToDraw == "square")
-		{
-			draw("square");
-		}
+		draw(whatToDraw);
 
 		if (glfwGetTime() - switchTime >= 2.0f)
 		{
