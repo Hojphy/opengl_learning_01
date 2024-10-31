@@ -9,21 +9,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <math.h>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+#include "shaderClass.h"
+#include "VBO.h"
+#include "EBO.h"
+#include "VAO.h"
 
-const char* vertexShaderSource = "#version 330 core\n"
-"layout (location = 0) in vec3 aPos;\n"
-"uniform mat4 model;\n"
-"void main()\n"
-"{\n"
-"   gl_Position = model * vec4(aPos, 1.0);\n"
-"}\0";
-const char* fragmentShaderSource = "#version 330 core\n"
-"out vec4 FragColor;\n"
-"void main()\n"
-"{\n"
-"   FragColor = vec4(0.8f, 0.3f, 0.02f, 1.0f);\n"
-"}\n\0";
+void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 GLfloat triangleVerticies[] = {
 		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
@@ -36,64 +27,43 @@ GLfloat squareVerticies[] = {
 	-0.5f,  0.5f, 0.0f,
 	 0.5f,  0.5f, 0.0f 
 };
-GLuint shaderProgram;
-GLuint vertexArrayObject, vertexBufferObject;
 std::string whatToDraw;
 
-void initializeShaders()
-{
-	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-
-	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-
-	shaderProgram = glCreateProgram();
-
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-
-	glLinkProgram(shaderProgram);
-
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-}
+VAO vao;
+VBO vbo;
+Shader shader("default.vert", "default.frag");
 
 void initializeVerticies()
 {
-	glGenVertexArrays(1, &vertexArrayObject);
+	vao.Bind();
 
-	glGenBuffers(1, &vertexBufferObject);
+	VBO temp(triangleVerticies, sizeof(triangleVerticies));
+	vbo = temp;
 
-	glBindVertexArray(vertexArrayObject);
-
-	glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(0);
+	vao.LinkVBO(vbo, 0);
+	vao.Unbind();
+	vbo.Unbind();
 }
 
 void draw(std::string what)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	glBindVertexArray(vertexArrayObject);
-	glUseProgram(shaderProgram);
+	vao.Bind();
+	shader.Activate();
 	double t = glfwGetTime();
 	float sinWave = 0.5f * sin(1.5f * M_PI * 2.4f * t + 0.1f);
 	glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, sinWave, 0.0f));
 	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(sinWave, sinWave, 0.0f));
 	if (what == "triangle")
 	{
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
+		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
 		glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVerticies), triangleVerticies, GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else if (what == "square")
 	{
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgram, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
-		glBufferData(GL_ARRAY_BUFFER, sizeof(squareVerticies), squareVerticies, GL_STATIC_DRAW);
+		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
+		
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 		glDrawArrays(GL_TRIANGLES, 1, 3);
 	}
@@ -123,10 +93,7 @@ int main()
 	}
 	glViewport(0, 0, 800, 600);
 
-	initializeShaders();
 	initializeVerticies();
-
-	//glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
@@ -153,9 +120,9 @@ int main()
 		glfwPollEvents();
 	}
 	glBindVertexArray(0);
-	glDeleteVertexArrays(1, &vertexArrayObject);
-	glDeleteBuffers(1, &vertexBufferObject);
-	glDeleteProgram(shaderProgram);
+	vao.Delete();
+	vbo.Delete();
+	shader.Delete();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
