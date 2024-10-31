@@ -38,6 +38,34 @@ GLfloat verticies[] = {
 		  0.5f,  0.5f, -0.5f  // Top right
 };
 
+GLfloat colors[] = {
+	// Triangle colors
+	1.0f, 0.0f, 0.0f, 1.0f, // Red
+	0.0f, 1.0f, 0.0f, 1.0f, // Green
+	0.0f, 0.0f, 1.0f, 1.0f, // Blue
+
+	// Square colors
+	1.0f, 0.0f, 0.0f, 1.0f, // Bottom left (Red)
+	0.0f, 1.0f, 0.0f, 1.0f, // Bottom right (Green)
+	0.0f, 0.0f, 1.0f, 1.0f, // Top left (Blue)
+	1.0f, 1.0f, 0.0f, 1.0f, // Top right (Yellow)
+
+	// Back face colors (optional)
+	0.0f, 1.0f, 1.0f, 1.0f, // Cyan
+	1.0f, 0.0f, 1.0f, 1.0f, // Magenta
+	0.5f, 0.5f, 1.0f, 1.0f, // Light Blue
+	0.5f, 0.0f, 0.5f, 1.0f  // Dark Purple
+};
+
+GLfloat edgeColors[] = {
+	// Define edge colors for each edge, you may need to repeat or assign colors depending on the edge count
+	1.0f, 0.0f, 0.0f, 1.0f, // Color for edge 1 (Red)
+	0.0f, 1.0f, 0.0f, 1.0f, // Color for edge 2 (Green)
+	0.0f, 0.0f, 1.0f, 1.0f, // Color for edge 3 (Blue)
+	1.0f, 1.0f, 0.0f, 1.0f  // Color for edge 4 (Yellow)
+	// Continue for all edges
+};
+
 GLuint squareIndices[] = {
 	// Front face
 	3, 4, 5,
@@ -56,8 +84,8 @@ GLuint squareIndices[] = {
 	4, 7, 8,
 
 	// Top face
-	//5, 6, 9,
-	//6, 10, 9,
+	5, 6, 9,
+	6, 10, 9,
 
 	// Back face
 	7, 8, 9,
@@ -87,7 +115,10 @@ GLuint edgeIndices[] = {
 std::string whatToDraw;
 
 VAO* vao;
+VAO* edgeVao;
 VBO* vbo;
+VBO* colorVbo;
+VBO* edgeColorVbo;
 EBO* ebo;
 EBO* edgeEbo;
 Shader* shader;
@@ -97,19 +128,41 @@ void initializeVerticies()
 {
 	vao = new VAO();
 	vbo = new VBO(verticies, sizeof(verticies));
-	vao->Bind();
-
+	colorVbo = new VBO(colors, sizeof(colors));
 	ebo = new EBO(squareIndices, sizeof(squareIndices));
+	vao->Bind();
+	vbo->Bind();
+	colorVbo->Bind();
 	ebo->Bind();
 
-	edgeEbo = new EBO(edgeIndices, sizeof(edgeIndices));
-	edgeEbo->Bind();
-
 	vao->LinkVBO(*vbo, 0);
+	vao->LinkVBO(*colorVbo, 1);
+
 	vao->Unbind();
 	vbo->Unbind();
 	ebo->Unbind();
-	ebo->Unbind();
+	colorVbo->Unbind();
+
+	edgeVao = new VAO();
+	edgeColorVbo = new VBO(edgeColors, sizeof(edgeColors));
+	edgeEbo = new EBO(edgeIndices, sizeof(edgeIndices));
+
+	edgeVao->Bind();
+	edgeColorVbo->Bind();
+	vbo->Bind();
+	edgeEbo->Bind();
+
+	edgeVao->LinkVBO(*vbo, 0);
+	edgeVao->LinkVBO(*edgeColorVbo, 1);
+
+	edgeVao->Unbind();
+	edgeColorVbo->Unbind();
+	vbo->Unbind();
+	edgeEbo->Unbind();
+
+	//______________________
+
+
 }
 
 void draw(std::string what)
@@ -142,24 +195,26 @@ void draw(std::string what)
 	glm::mat4 mvp = Projection * View * Model;
 
 	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(mvp));
-	vao->Bind();
+
 	if (what == "triangle")
 	{
+		vao->Bind();
 		glDrawArrays(GL_TRIANGLES, 0, 3);
+		vao->Unbind();
 	}
 	else if (what == "square")
 	{
-		//glDrawElements(GL_TRIANGLES, sizeof(squareIndices), GL_UNSIGNED_INT, nullptr);
-		//glColor3f(0.8f, 0.3f, 0.02f);
-		float myColor[] = { sinWave, 0.5f, sinWave, 1.0f };
-		GLint colorLocation = glGetUniformLocation(shader->ID, "color");
-		glUniform4fv(colorLocation, 1, myColor);
+		vao->Bind();
+		glUniform4f(glGetUniformLocation(shader->ID, "color"), sinWave, 0.5f, sinWave, 1.0f);
+		glDrawElements(GL_TRIANGLES, sizeof(squareIndices) / sizeof(GLuint), GL_UNSIGNED_INT, nullptr);
+		vao->Unbind();
 
-		glDrawElements(GL_LINES, sizeof(edgeIndices), GL_UNSIGNED_INT, (void*)0);
-
-		glLineWidth(2.0f);
+		edgeVao->Bind();
+		//glUniform4f(glGetUniformLocation(shader->ID, "color"), 1.0f, 1.0f, 1.0f, 1.0f); // White for edges
+		glLineWidth(4.0f);
+		glDrawElements(GL_LINES, sizeof(edgeIndices) / sizeof(GLuint), GL_UNSIGNED_INT, nullptr);
+		edgeVao->Unbind();
 	}
-	vao->Unbind();
 }
 
 int main()
@@ -195,9 +250,14 @@ int main()
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+
 	float rotationTime = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
 	{
+		GLenum err;
+		while ((err = glGetError()) != GL_NO_ERROR) {
+			std::cout << "OpenGL error: " << err << std::endl;
+		}
 		float currentFrameTime = glfwGetTime();
 		float deltaTime = currentFrameTime - rotationTime;
 		rotationTime = currentFrameTime;
