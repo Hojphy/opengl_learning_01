@@ -16,57 +16,56 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-GLfloat triangleVerticies[] = {
+GLfloat verticies[] = {
+		//triangle
 		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
 		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f
-};
-GLfloat squareVerticies[] = {
-	-0.5f, -0.5f, 0.0f,
-	 0.5f, -0.5f, 0.0f,
-	-0.5f,  0.5f, 0.0f,
-	 0.5f,  0.5f, 0.0f 
+		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
+		//square
+		-0.5f, -0.5f, 0.0f,
+		0.5f, -0.5f, 0.0f,
+		-0.5f,  0.5f, 0.0f,
+		0.5f,  0.5f, 0.0f
 };
 std::string whatToDraw;
 
-VAO vao;
-VBO vbo;
-Shader shader("default.vert", "default.frag");
+VAO* vao;
+VBO* vbo;
+Shader* shader;
 
 void initializeVerticies()
 {
-	vao.Bind();
+	vao = new VAO();
+	vbo = new VBO(verticies, sizeof(verticies));
+	vao->Bind();
 
-	VBO temp(triangleVerticies, sizeof(triangleVerticies));
-	vbo = temp;
+	VBO temp();
 
-	vao.LinkVBO(vbo, 0);
-	vao.Unbind();
-	vbo.Unbind();
+	vao->LinkVBO(*vbo, 0);
+	vao->Unbind();
+	vbo->Unbind();
 }
 
 void draw(std::string what)
 {
 	glClear(GL_COLOR_BUFFER_BIT);
-	vao.Bind();
-	shader.Activate();
+	shader->Activate();
 	double t = glfwGetTime();
 	float sinWave = 0.5f * sin(1.5f * M_PI * 2.4f * t + 0.1f);
 	glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, sinWave, 0.0f));
 	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(sinWave, sinWave, 0.0f));
+	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
+	vao->Bind();
 	if (what == "triangle")
 	{
-		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
-		glBufferData(GL_ARRAY_BUFFER, sizeof(triangleVerticies), triangleVerticies, GL_STATIC_DRAW);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else if (what == "square")
 	{
-		glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(transformMatrix * scaleMatrix));
-		
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawArrays(GL_TRIANGLES, 1, 3);
+		glDrawArrays(GL_TRIANGLES, 3, 3);
+		glDrawArrays(GL_TRIANGLES, 4, 3);
 	}
+	vao->Unbind();
 }
 
 int main()
@@ -93,11 +92,11 @@ int main()
 	}
 	glViewport(0, 0, 800, 600);
 
-	initializeVerticies();
-
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 
 	float switchTime = glfwGetTime();
+	shader = new Shader("default.vert", "default.frag");
+	initializeVerticies();
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -120,9 +119,11 @@ int main()
 		glfwPollEvents();
 	}
 	glBindVertexArray(0);
-	vao.Delete();
-	vbo.Delete();
-	shader.Delete();
+	vao->Delete();
+	vbo->Delete();
+	delete vao;
+	delete vbo;
+	shader->Delete();
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
