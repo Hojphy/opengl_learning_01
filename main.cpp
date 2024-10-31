@@ -19,9 +19,9 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 GLfloat verticies[] = {
 		//triangle
 		
-		//-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-		//0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-		//0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
+		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
+		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
+		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
 		
 		//square
 		
@@ -40,28 +40,48 @@ GLfloat verticies[] = {
 
 GLuint squareIndices[] = {
 	// Front face
-	0, 1, 2,
-	1, 3, 2,
-
-	// Back face
+	3, 4, 5,
 	4, 6, 5,
-	5, 6, 7,
 
 	// Left face
-	4, 2, 6,
-	2, 6, 7,
+	3, 5, 7,
+	5, 9, 7,
 
 	// Right face
-	1, 5, 3,
-	3, 5, 7,
-
-	// Top face
-	2, 3, 6,
-	3, 7, 6,
+	4, 8, 6,
+	8, 10, 6,
 
 	// Bottom face
-	4, 5, 0,
-	0, 1, 5
+	3, 7, 4,
+	4, 7, 8,
+
+	// Top face
+	//5, 6, 9,
+	//6, 10, 9,
+
+	// Back face
+	7, 8, 9,
+	8, 10, 9
+};
+
+GLuint edgeIndices[] = {
+	// Front face edges
+	3, 4,
+	4, 6,
+	6, 5,
+	5, 3,
+
+	// Back face edges
+	7, 8,
+	8, 10,
+	10, 9,
+	9, 7,
+
+	// Connecting edges between front and back faces
+	3, 7,
+	4, 8,
+	5, 9,
+	6, 10
 };
 
 std::string whatToDraw;
@@ -69,6 +89,7 @@ std::string whatToDraw;
 VAO* vao;
 VBO* vbo;
 EBO* ebo;
+EBO* edgeEbo;
 Shader* shader;
 
 void initializeVerticies()
@@ -80,15 +101,19 @@ void initializeVerticies()
 	ebo = new EBO(squareIndices, sizeof(squareIndices));
 	ebo->Bind();
 
+	edgeEbo = new EBO(edgeIndices, sizeof(edgeIndices));
+	edgeEbo->Bind();
+
 	vao->LinkVBO(*vbo, 0);
 	vao->Unbind();
 	vbo->Unbind();
+	ebo->Unbind();
 	ebo->Unbind();
 }
 
 void draw(std::string what)
 {
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	shader->Activate();
 	double t = glfwGetTime();
 	float sinWave = 1.5f * sin(1.5f * M_PI * 2.4f * t + 0.1f);
@@ -98,7 +123,7 @@ void draw(std::string what)
 	glm::mat4 Model = glm::mat4(1.0f);
 
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(sinWave, 0, -3), // Camera viewpoint pos
+		glm::vec3(sinWave, 1, -3), // Camera viewpoint pos
 		glm::vec3(0, 0, 0),		   // Looking pos
 		glm::vec3(0, 1, 0)		   // Up direction
 	);
@@ -116,18 +141,27 @@ void draw(std::string what)
 	vao->Bind();
 	if (what == "triangle")
 	{
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
 	}
 	else if (what == "square")
 	{
-		glDrawElements(GL_TRIANGLES, sizeof(squareIndices) / sizeof(squareIndices[0]), GL_UNSIGNED_INT, nullptr);
+		//glDrawElements(GL_TRIANGLES, sizeof(squareIndices), GL_UNSIGNED_INT, nullptr);
+		//glColor3f(0.8f, 0.3f, 0.02f);
+		float myColor[] = { sinWave, 0.5f, sinWave, 1.0f };
+		GLint colorLocation = glGetUniformLocation(shader->ID, "color");
+		glUniform4fv(colorLocation, 1, myColor);
+
+		glDrawElements(GL_LINES, sizeof(edgeIndices), GL_UNSIGNED_INT, (void*)0);
+
+		glLineWidth(2.0f);
 	}
 	vao->Unbind();
 }
 
 int main()
 {
-	whatToDraw = "triangle";
+	bool swapShapes = false;
+	whatToDraw = "square";
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -154,12 +188,14 @@ int main()
 	float switchTime = glfwGetTime();
 	shader = new Shader("default.vert", "default.frag");
 	initializeVerticies();
-
+	// Enable depth test
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 	while (!glfwWindowShouldClose(window))
 	{
 		draw(whatToDraw);
 
-		if (glfwGetTime() - switchTime >= 2.0f)
+		if (glfwGetTime() - switchTime >= 2.0f && swapShapes)
 		{
 			whatToDraw = whatToDraw == "triangle" ? "square" : "triangle";
 			std::cout << "Drawing a " << whatToDraw << "\n";
