@@ -91,6 +91,7 @@ VBO* vbo;
 EBO* ebo;
 EBO* edgeEbo;
 Shader* shader;
+float rotation = 0;
 
 void initializeVerticies()
 {
@@ -122,8 +123,11 @@ void draw(std::string what)
 
 	glm::mat4 Model = glm::mat4(1.0f);
 
+	Model = glm::rotate(Model, glm::radians((float)rotation), glm::vec3(fabs(sinWave), fabs(-sinWave), fabs(sinWave)));
+
+
 	glm::mat4 View = glm::lookAt(
-		glm::vec3(sinWave, 1, -3), // Camera viewpoint pos
+		glm::vec3(5, 1, -3), // Camera viewpoint pos
 		glm::vec3(0, 0, 0),		   // Looking pos
 		glm::vec3(0, 1, 0)		   // Up direction
 	);
@@ -191,10 +195,17 @@ int main()
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+	float rotationTime = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
 	{
-		draw(whatToDraw);
+		float currentFrameTime = glfwGetTime();
+		float deltaTime = currentFrameTime - rotationTime;
+		rotationTime = currentFrameTime;
 
+		float rotationSpeed = 90.0f;
+		rotation += rotationSpeed * deltaTime;
+		rotation = fmod(rotation, 360.0f);
+		draw(whatToDraw);
 		if (glfwGetTime() - switchTime >= 2.0f && swapShapes)
 		{
 			whatToDraw = whatToDraw == "triangle" ? "square" : "triangle";
