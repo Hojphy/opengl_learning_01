@@ -13,8 +13,11 @@
 #include "VBO.h"
 #include "EBO.h"
 #include "VAO.h"
+#include "Camera.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+
 
 GLfloat verticies[] = {
 		//triangle
@@ -59,10 +62,10 @@ GLfloat colors[] = {
 
 GLfloat edgeColors[] = {
 	// Define edge colors for each edge, you may need to repeat or assign colors depending on the edge count
-	1.0f, 0.0f, 0.0f, 1.0f, // Color for edge 1 (Red)
-	0.0f, 1.0f, 0.0f, 1.0f, // Color for edge 2 (Green)
-	0.0f, 0.0f, 1.0f, 1.0f, // Color for edge 3 (Blue)
-	1.0f, 1.0f, 0.0f, 1.0f  // Color for edge 4 (Yellow)
+	1.0f, 1.0f, 1.0f, 1.0f, // Color for edge 1 (Red)
+	1.0f, 1.0f, 1.0f, 1.0f, // Color for edge 2 (Green)
+	1.0f, 1.0f, 1.0f, 1.0f, // Color for edge 3 (Blue)
+	1.0f, 1.0f, 1.0f, 1.0f  // Color for edge 4 (Yellow)
 	// Continue for all edges
 };
 
@@ -122,6 +125,7 @@ VBO* edgeColorVbo;
 EBO* ebo;
 EBO* edgeEbo;
 Shader* shader;
+Camera* camera;
 float rotation = 0;
 
 void initializeVerticies()
@@ -179,11 +183,7 @@ void draw(std::string what)
 	Model = glm::rotate(Model, glm::radians((float)rotation), glm::vec3(fabs(sinWave), fabs(-sinWave), fabs(sinWave)));
 
 
-	glm::mat4 View = glm::lookAt(
-		glm::vec3(5, 1, -3), // Camera viewpoint pos
-		glm::vec3(0, 0, 0),		   // Looking pos
-		glm::vec3(0, 1, 0)		   // Up direction
-	);
+	glm::mat4 View = camera->GetView();
 
 	glm::mat4 Projection = glm::perspective(
 		glm::radians(45.0f), //FoV
@@ -227,6 +227,7 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	GLFWwindow* window = glfwCreateWindow(800, 600, "chuj", NULL, NULL);
+	camera = new Camera();
 	if (window == NULL)
 	{
 		std::cout << "Okno sie zesralo\n";
@@ -243,6 +244,7 @@ int main()
 	glViewport(0, 0, 800, 600);
 
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetCursorPosCallback(window, mouse_callback);
 
 	float switchTime = glfwGetTime();
 	shader = new Shader("default.vert", "default.frag");
@@ -250,8 +252,9 @@ int main()
 	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-	float rotationTime = glfwGetTime();
+	float lastFrame = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
 	{
 		GLenum err;
@@ -259,9 +262,10 @@ int main()
 			std::cout << "OpenGL error: " << err << std::endl;
 		}
 		float currentFrameTime = glfwGetTime();
-		float deltaTime = currentFrameTime - rotationTime;
-		rotationTime = currentFrameTime;
+		float deltaTime = currentFrameTime - lastFrame;
+		lastFrame = currentFrameTime;
 
+		camera->Update(window, deltaTime);
 		float rotationSpeed = 90.0f;
 		rotation += rotationSpeed * deltaTime;
 		rotation = fmod(rotation, 360.0f);
@@ -286,7 +290,14 @@ int main()
 	return 0;
 }
 
+
+
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
+}
+
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+	camera->UpdateMouse(window, xpos, ypos);
 }
