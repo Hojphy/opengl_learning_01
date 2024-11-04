@@ -1,19 +1,19 @@
 #ifndef WORLD_CLASS_H
 #define WORLD_CLASS_H
 
-#include <glad/glad.h>
-#include <glm/glm.hpp>
 #include <vector>
+#include <memory>
+
 #include "Block.h"
 
 class World
 {
 	public:
 		void Initialize();
-		void Render();
+		void Render(Shader& shader);
 	private:
-		std::vector<Block> m_blocks;
-		void CreateCube(float x, float y, float size, glm::vec3 rgb);
+		std::vector<std::unique_ptr<Block>> m_blocks;
+		void CreateCube(float x, float y, float z, float size, glm::vec3 rgb);
 };
 
 #endif

@@ -3,19 +3,31 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include "vao.h"
+#include "ebo.h"
+#include "shaderClass.h"
+
 
 class Block
 {
 public:
-	float x, y;
+	glm::vec3 position;
 	float size;
 	glm::vec3 rgb;
 	
-	Block(float x, float y, float size, glm::vec3 rgb)
-		: x(x), y(y), size(size), rgb(rgb) {}
+	Block(glm::vec3 position, float size, glm::vec3 rgb)
+		: position(position), size(size), rgb(rgb) {}
+	~Block();
 	
-	void Draw();
-
+	void Initialize();
+	void Draw(Shader& shader);
+private:
+	VAO* vao;
+	VBO* vbo;
+	EBO* ebo;
 
 };
 

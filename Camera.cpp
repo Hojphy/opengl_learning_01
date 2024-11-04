@@ -11,8 +11,8 @@ Camera::Camera()
 		m_direction,
 		m_up
 	);
-	m_yaw = 1;
-	m_pitch = 1;
+	m_yaw = -90;
+	m_pitch = 0;
 	m_lastx = 400;
 	m_lasty = 300;
 	m_firstmouse = true;
@@ -63,6 +63,7 @@ void Camera::UpdateMouse(GLFWwindow* window, double xpos, double ypos)
 
 	m_yaw += xoffset;
 	m_pitch += yoffset;
+
 
 	if (m_pitch > 89.0f)
 		m_pitch = 89.0f;

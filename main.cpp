@@ -14,174 +14,21 @@
 #include "EBO.h"
 #include "VAO.h"
 #include "Camera.h"
+#include "World.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 
-
-GLfloat verticies[] = {
-		//triangle
-		
-		-0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-		0.5f, -0.5f * float(sqrt(3)) / 3, 0.0f,
-		0.0f, 0.5f * float(sqrt(3)) * 2 / 3, 0.0f,
-		
-		//square
-		
-		// Front face
-		-0.5f, -0.5f,  0.5f, // Bottom left
-		 0.5f, -0.5f,  0.5f, // Bottom right
-		-0.5f,  0.5f,  0.5f, // Top left
-		 0.5f,  0.5f,  0.5f, // Top right
-
-		 // Back face
-		 -0.5f, -0.5f, -0.5f, // Bottom left
-		  0.5f, -0.5f, -0.5f, // Bottom right
-		 -0.5f,  0.5f, -0.5f, // Top left
-		  0.5f,  0.5f, -0.5f  // Top right
-};
-
-GLfloat colors[] = {
-	// Triangle colors
-	1.0f, 0.0f, 0.0f, 1.0f, // Red
-	0.0f, 1.0f, 0.0f, 1.0f, // Green
-	0.0f, 0.0f, 1.0f, 1.0f, // Blue
-
-	// Square colors
-	1.0f, 0.0f, 0.0f, 1.0f, // Bottom left (Red)
-	0.0f, 1.0f, 0.0f, 1.0f, // Bottom right (Green)
-	0.0f, 0.0f, 1.0f, 1.0f, // Top left (Blue)
-	1.0f, 1.0f, 0.0f, 1.0f, // Top right (Yellow)
-
-	// Back face colors (optional)
-	0.0f, 1.0f, 1.0f, 1.0f, // Cyan
-	1.0f, 0.0f, 1.0f, 1.0f, // Magenta
-	0.5f, 0.5f, 1.0f, 1.0f, // Light Blue
-	0.5f, 0.0f, 0.5f, 1.0f  // Dark Purple
-};
-
-GLfloat edgeColors[] = {
-	// Define edge colors for each edge, you may need to repeat or assign colors depending on the edge count
-	1.0f, 1.0f, 1.0f, 1.0f, // Color for edge 1 (Red)
-	1.0f, 1.0f, 1.0f, 1.0f, // Color for edge 2 (Green)
-	1.0f, 1.0f, 1.0f, 1.0f, // Color for edge 3 (Blue)
-	1.0f, 1.0f, 1.0f, 1.0f  // Color for edge 4 (Yellow)
-	// Continue for all edges
-};
-
-GLuint squareIndices[] = {
-	// Front face
-	3, 4, 5,
-	4, 6, 5,
-
-	// Left face
-	3, 5, 7,
-	5, 9, 7,
-
-	// Right face
-	4, 8, 6,
-	8, 10, 6,
-
-	// Bottom face
-	3, 7, 4,
-	4, 7, 8,
-
-	// Top face
-	5, 6, 9,
-	6, 10, 9,
-
-	// Back face
-	7, 8, 9,
-	8, 10, 9
-};
-
-GLuint edgeIndices[] = {
-	// Front face edges
-	3, 4,
-	4, 6,
-	6, 5,
-	5, 3,
-
-	// Back face edges
-	7, 8,
-	8, 10,
-	10, 9,
-	9, 7,
-
-	// Connecting edges between front and back faces
-	3, 7,
-	4, 8,
-	5, 9,
-	6, 10
-};
-
-std::string whatToDraw;
-
-VAO* vao;
-VAO* edgeVao;
-VBO* vbo;
-VBO* colorVbo;
-VBO* edgeColorVbo;
-EBO* ebo;
-EBO* edgeEbo;
 Shader* shader;
 Camera* camera;
-float rotation = 0;
+World* world;
 
-void initializeVerticies()
+void draw()
 {
-	vao = new VAO();
-	vbo = new VBO(verticies, sizeof(verticies));
-	colorVbo = new VBO(colors, sizeof(colors));
-	ebo = new EBO(squareIndices, sizeof(squareIndices));
-	vao->Bind();
-	vbo->Bind();
-	colorVbo->Bind();
-	ebo->Bind();
-
-	vao->LinkVBO(*vbo, 0);
-	vao->LinkVBO(*colorVbo, 1);
-
-	vao->Unbind();
-	vbo->Unbind();
-	ebo->Unbind();
-	colorVbo->Unbind();
-
-	edgeVao = new VAO();
-	edgeColorVbo = new VBO(edgeColors, sizeof(edgeColors));
-	edgeEbo = new EBO(edgeIndices, sizeof(edgeIndices));
-
-	edgeVao->Bind();
-	edgeColorVbo->Bind();
-	vbo->Bind();
-	edgeEbo->Bind();
-
-	edgeVao->LinkVBO(*vbo, 0);
-	edgeVao->LinkVBO(*edgeColorVbo, 1);
-
-	edgeVao->Unbind();
-	edgeColorVbo->Unbind();
-	vbo->Unbind();
-	edgeEbo->Unbind();
-
-	//______________________
-
-
-}
-
-void draw(std::string what)
-{
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	shader->Activate();
-	double t = glfwGetTime();
-	float sinWave = 1.5f * sin(1.5f * M_PI * 2.4f * t + 0.1f);
-	glm::mat4 transformMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 3.0f));
-	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 0.0f));
 
 	glm::mat4 Model = glm::mat4(1.0f);
-
-	Model = glm::rotate(Model, glm::radians((float)rotation), glm::vec3(fabs(sinWave), fabs(-sinWave), fabs(sinWave)));
-
 
 	glm::mat4 View = camera->GetView();
 
@@ -192,42 +39,23 @@ void draw(std::string what)
 		100.0f               //Far clipping plane
 	);
 
-	glm::mat4 mvp = Projection * View * Model;
+	shader->Activate();
 
-	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(mvp));
+	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "projection"), 1, GL_FALSE, glm::value_ptr(Projection));
+	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "view"), 1, GL_FALSE, glm::value_ptr(View));
+	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "model"), 1, GL_FALSE, glm::value_ptr(Model));
 
-	if (what == "triangle")
-	{
-		vao->Bind();
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		vao->Unbind();
-	}
-	else if (what == "square")
-	{
-		vao->Bind();
-		glUniform4f(glGetUniformLocation(shader->ID, "color"), sinWave, 0.5f, sinWave, 1.0f);
-		glDrawElements(GL_TRIANGLES, sizeof(squareIndices) / sizeof(GLuint), GL_UNSIGNED_INT, nullptr);
-		vao->Unbind();
-
-		edgeVao->Bind();
-		//glUniform4f(glGetUniformLocation(shader->ID, "color"), 1.0f, 1.0f, 1.0f, 1.0f); // White for edges
-		glLineWidth(4.0f);
-		glDrawElements(GL_LINES, sizeof(edgeIndices) / sizeof(GLuint), GL_UNSIGNED_INT, nullptr);
-		edgeVao->Unbind();
-	}
+	world->Render(*shader);
 }
 
 int main()
 {
-	bool swapShapes = false;
-	whatToDraw = "square";
 	glfwInit();
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	GLFWwindow* window = glfwCreateWindow(800, 600, "chuj", NULL, NULL);
-	camera = new Camera();
 	if (window == NULL)
 	{
 		std::cout << "Okno sie zesralo\n";
@@ -246,14 +74,14 @@ int main()
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 
-	float switchTime = glfwGetTime();
 	shader = new Shader("default.vert", "default.frag");
-	initializeVerticies();
-	// Enable depth test
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	world = new World();
+	world->Initialize();
 
+	camera = new Camera();
 	float lastFrame = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
 	{
@@ -264,27 +92,16 @@ int main()
 		float currentFrameTime = glfwGetTime();
 		float deltaTime = currentFrameTime - lastFrame;
 		lastFrame = currentFrameTime;
-
+		draw();
 		camera->Update(window, deltaTime);
-		float rotationSpeed = 90.0f;
-		rotation += rotationSpeed * deltaTime;
-		rotation = fmod(rotation, 360.0f);
-		draw(whatToDraw);
-		if (glfwGetTime() - switchTime >= 2.0f && swapShapes)
-		{
-			whatToDraw = whatToDraw == "triangle" ? "square" : "triangle";
-			std::cout << "Drawing a " << whatToDraw << "\n";
-			switchTime = glfwGetTime();
-		}
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 	glBindVertexArray(0);
-	vao->Delete();
-	vbo->Delete();
-	delete vao;
-	delete vbo;
 	shader->Delete();
+	delete shader;
+	delete camera;
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
