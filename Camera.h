@@ -14,6 +14,7 @@ class Camera
 		glm::mat4 GetView();
 
 		glm::vec3 Front();
+		glm::vec3 position;
 
 		void SetPosition(glm::vec3 pos);
 		void setDirection(glm::vec3 dir);
@@ -24,7 +25,6 @@ class Camera
 		void ProcessInput(GLFWwindow *window, float deltaTime);
 	private:
 		glm::mat4 m_view;
-		glm::vec3 m_position;
 		glm::vec3 m_direction;
 		glm::vec3 m_right;
 		glm::vec3 m_up;

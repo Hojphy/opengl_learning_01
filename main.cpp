@@ -19,6 +19,7 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 
 Shader* shader;
 Camera* camera;
@@ -85,6 +86,7 @@ int main()
 	camera = new Camera();
 	float lastFrame = glfwGetTime();
 	glfwSetKeyCallback(window, key_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
 	while (!glfwWindowShouldClose(window))
 	{
 		GLenum err;
@@ -96,7 +98,7 @@ int main()
 		lastFrame = currentFrameTime;
 		draw(deltaTime);
 		camera->Update(window, deltaTime);
-		world->Update(deltaTime);
+		world->Update(deltaTime, camera);
 		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -121,6 +123,18 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	camera->UpdateMouse(window, xpos, ypos);
+}
+
+void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+	{
+		world->LClickPress(camera);
+	}
+	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+	{
+		world->LClickRelease();
+	}
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)

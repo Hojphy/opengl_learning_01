@@ -3,11 +3,11 @@
 
 Camera::Camera()
 {
-	m_position = glm::vec3(0, 0, 3.0f);
+	position = glm::vec3(0, 0, 3.0f);
 	m_direction = glm::vec3(0, 0, 0);
 	m_up = glm::vec3(0, 1.0f, 0);
 	m_view = glm::lookAt(
-		m_position,
+		position,
 		m_direction,
 		m_up
 	);
@@ -26,7 +26,7 @@ void Camera::Update(GLFWwindow *window, float deltaTime)
 
 void Camera::SetPosition(glm::vec3 pos)
 {
-	m_position = pos;
+	position = pos;
 }
 
 void Camera::setUp(glm::vec3 up)
@@ -37,8 +37,8 @@ void Camera::setUp(glm::vec3 up)
 void Camera::UpdateView()
 {
 	m_view = glm::lookAt(
-		m_position,
-		m_position + Front(),
+		position,
+		position + Front(),
 		m_up
 	);
 }
@@ -82,17 +82,17 @@ void Camera::ProcessInput(GLFWwindow *window, float deltaTime)
 {
 	const float speed = 2 * deltaTime;
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		m_position += speed * Front();
+		position += speed * Front();
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		m_position -= speed * Front();
+		position -= speed * Front();
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-		m_position -= glm::normalize(glm::cross(Front(), m_up)) * speed;
+		position -= glm::normalize(glm::cross(Front(), m_up)) * speed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-		m_position += glm::normalize(glm::cross(Front(), m_up)) * speed;
+		position += glm::normalize(glm::cross(Front(), m_up)) * speed;
 	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-		m_position.y += speed;
+		position.y += speed;
 	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-		m_position.y -= speed;
+		position.y -= speed;
 		
 }
 

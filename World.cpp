@@ -28,12 +28,17 @@ void World::Render(Shader& shader)
 	}
 }
 
-void World::Update(float deltaTime)
+void World::Update(float deltaTime, Camera* camera)
 {
 	for (const auto& block : m_blocks)
 	{
 		if (block->blockType == PHYSICS)
 		{
+			if (selectedBlock && block.get() == selectedBlock)
+			{
+				block->position = camera->position + camera->Front() * 2.0f;
+				continue;
+			}
 			if (moveBlock)
 			{
 				block->previousPosition.y = block->position.y+1.0f;
@@ -61,10 +66,23 @@ void World::Update(float deltaTime)
 					block->previousPosition.y = block2->position.y + 1;
 					break;
 				}
-
 			}
 		}
 	}
+}
+
+void World::LClickPress(Camera* camera)
+{
+	Block* inFrontOfCamera = InFrontOfCamera(camera);
+	if (inFrontOfCamera)
+	{
+		selectedBlock = inFrontOfCamera;
+	}
+}
+
+void World::LClickRelease()
+{
+	selectedBlock = nullptr;
 }
 
 void World::CreateCube(float x, float y, float z, float size, glm::vec3 rgb, BlockType blockType)
@@ -72,4 +90,22 @@ void World::CreateCube(float x, float y, float z, float size, glm::vec3 rgb, Blo
 	auto block = std::make_unique<Block>(glm::vec3(x, y, z), size, rgb, blockType);
 	block->Initialize();
 	m_blocks.push_back(std::move(block));
+}
+
+Block* World::InFrontOfCamera(Camera* camera)
+{
+	for (const auto& block : m_blocks)
+	{
+		const unsigned int range = 5;
+		for (float i = 1; i <= range; i++)
+		{
+			float halfSize = block->size / 2;
+			glm::vec3 cameraPos = camera->position + camera->Front() * i;
+			if (block->position == cameraPos)
+			{
+				return block.get();
+			}
+		}
+	}
+	return nullptr;
 }
