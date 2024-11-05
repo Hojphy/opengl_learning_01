@@ -14,6 +14,7 @@
 class World
 {
 	public:
+		World() : selectedBlockDistance(-1) {}
 		void Initialize();
 		void Render(Shader& shader);
 		void Update(float deltaTime, Camera* camera);
@@ -27,6 +28,7 @@ class World
 		std::vector<std::unique_ptr<Block>> m_blocks;
 		bool moveBlock;
 		Block* selectedBlock;
+		float selectedBlockDistance;
 	private:
 		void CreateCube(float x, float y, float z, float size, glm::vec3 rgb, BlockType blockType);
 };

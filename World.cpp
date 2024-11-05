@@ -11,7 +11,6 @@ void World::Initialize()
 			CreateCube(x, -2.0f, z, 1.0f, glm::vec3(fabs(x), 0.5f, fabs(z)), SOLID);
 		}
 	}
-	CreateCube(5, -2.0f, 0, 1.0f, glm::vec3(0.5f, 0.5f, 0.5f), SOLID);
 	for (int x = -1; x <= 1; x++)
 	{
 		for (int z = -1; z <= 1; z++)
@@ -39,20 +38,26 @@ void World::Update(float deltaTime, Camera* camera)
 			if (!selectedBlock && InFrontOfCamera(camera) && block.get() == InFrontOfCamera(camera))
 			{
 				block->SetRGB(glm::vec3(1, 1, 0));
+				selectedBlockDistance = -1;
 			}
-			else if(!selectedBlock)
+			else if (!selectedBlock)
 			{
 				block->SetRGB(glm::vec3(1, 1, 1));
+				selectedBlockDistance = -1;
 			}
 			if (selectedBlock)
 			{
-					selectedBlock->SetRGB(glm::vec3(0.5, 0.5, 0));
-					selectedBlock->position = camera->position + camera->Front() * 2.0f;
-					selectedBlock->previousPosition = selectedBlock->position;
+				if (selectedBlockDistance == -1)
+				{
+					selectedBlockDistance = sqrt(pow(selectedBlock->position.x - camera->position.x, 2) + pow(selectedBlock->position.y - camera->position.y, 2) + pow(selectedBlock->position.z - camera->position.z, 2));
+				}
+				selectedBlock->SetRGB(glm::vec3(0.5, 0.5, 0));
+				selectedBlock->position = camera->position + camera->Front() * selectedBlockDistance;
+				selectedBlock->previousPosition = selectedBlock->position;
 			}
 			if (moveBlock)
 			{
-				block->previousPosition.y = block->position.y+1.0f;
+				block->previousPosition.y = block->position.y + 1.0f;
 				block->position.y += 1.0f;
 				moveBlock = false;
 			}
@@ -82,7 +87,7 @@ void World::LClickRelease()
 void World::RClickPress(Camera* camera)
 {
 	glm::vec3 pos = camera->position + camera->Front() * 2.0f;
-	CreateCube(pos.x, pos.y, pos.z, 1.0f, glm::vec3(1,1,1), PHYSICS);
+	CreateCube(pos.x, pos.y, pos.z, 1.0f, glm::vec3(1, 1, 1), PHYSICS);
 }
 
 void World::CreateCube(float x, float y, float z, float size, glm::vec3 rgb, BlockType blockType)
@@ -100,8 +105,7 @@ Block* World::InFrontOfCamera(Camera* camera)
 	for (const auto& block : m_blocks)
 	{
 		if (block->blockType != PHYSICS) continue;
-		const unsigned int range = 5;
-		for (float i = 1; i <= range; i++)
+		for (float i = 1; i <= maxDistance; i++)
 		{
 			float halfSize = block->size / 2;
 			glm::vec3 blockMin = block->position - glm::vec3(halfSize);
