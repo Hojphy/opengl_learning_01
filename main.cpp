@@ -18,6 +18,7 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 Shader* shader;
 Camera* camera;
@@ -83,6 +84,7 @@ int main()
 
 	camera = new Camera();
 	float lastFrame = glfwGetTime();
+	glfwSetKeyCallback(window, key_callback);
 	while (!glfwWindowShouldClose(window))
 	{
 		GLenum err;
@@ -95,6 +97,7 @@ int main()
 		draw(deltaTime);
 		camera->Update(window, deltaTime);
 		world->Update(deltaTime);
+		
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
@@ -102,6 +105,7 @@ int main()
 	shader->Delete();
 	delete shader;
 	delete camera;
+	delete world;
 	glfwDestroyWindow(window);
 	glfwTerminate();
 	return 0;
@@ -117,4 +121,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 void mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
 	camera->UpdateMouse(window, xpos, ypos);
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_K && action == GLFW_PRESS)
+	{
+		world->moveBlock = true;
+	}
 }

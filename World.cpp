@@ -34,12 +34,16 @@ void World::Update(float deltaTime)
 	{
 		if (block->blockType == PHYSICS)
 		{
+			if (moveBlock)
+			{
+				block->previousPosition.y = block->position.y+1.0f;
+				block->position.y += 1.0f;
+				moveBlock = false;
+			}
 			glm::vec3 acceleration = block->gravity;
 			glm::vec3 newPosition = block->position + (block->position - block->previousPosition) + acceleration * deltaTime * deltaTime;
-
 			block->previousPosition = block->position;
 			block->position = newPosition;
-
 			for (const auto& block2 : m_blocks)
 			{
 				if (block == block2) continue;

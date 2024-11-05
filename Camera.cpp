@@ -89,6 +89,10 @@ void Camera::ProcessInput(GLFWwindow *window, float deltaTime)
 		m_position -= glm::normalize(glm::cross(Front(), m_up)) * speed;
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 		m_position += glm::normalize(glm::cross(Front(), m_up)) * speed;
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		m_position.y += speed;
+	if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+		m_position.y -= speed;
 		
 }
 
