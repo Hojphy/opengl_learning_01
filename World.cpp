@@ -17,7 +17,7 @@ void World::Initialize()
 			CreateCube(x, 10.0f, z, 1.0f, glm::vec3(fabs(x), 0.5f, fabs(z)), SOLID);
 		}
 	}
-	CreateCube(0, 9, 0, 1.0f, glm::vec3(1, 1, 1), PHYSICS);
+	CreateCube(0.2f, 9, 0.5f, 1.0f, glm::vec3(1, 1, 1), PHYSICS);
 }
 
 void World::Render(Shader& shader)
@@ -47,8 +47,10 @@ void World::Update(float deltaTime)
 
 				float minY = block2->position.y - halfSize + 0.5f;
 				float maxY = block2->position.y + halfSize + 0.5f;
-				if (block->position.x == block2->position.x &&
-					block->position.z == block2->position.z &&
+				if (block->position.x <= block2->position.x + halfSize &&
+					block->position.x >= block2->position.x - halfSize &&
+					block->position.z <= block2->position.z + halfSize &&
+					block->position.z >= block2->position.z - halfSize &&
 					block->position.y <= maxY && block->position.y >= minY)
 				{
 					block->position.y = block2->position.y + 1;
