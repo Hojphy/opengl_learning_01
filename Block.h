@@ -10,16 +10,30 @@
 #include "ebo.h"
 #include "shaderClass.h"
 
+enum BlockType
+{
+	SOLID,
+	PHYSICS
+};
 
 class Block
 {
 public:
+	glm::vec3 previousPosition;
 	glm::vec3 position;
-	float size;
 	glm::vec3 rgb;
+	glm::vec3 velocity;
 	
-	Block(glm::vec3 position, float size, glm::vec3 rgb)
-		: position(position), size(size), rgb(rgb) {}
+	glm::vec3 gravity;
+
+	float size;
+	float mass;
+	float bounciness;
+	float damping;
+
+	BlockType blockType;
+	
+	Block(glm::vec3 position, float size, glm::vec3 rgb, BlockType blockType);
 	~Block();
 	
 	void Initialize();

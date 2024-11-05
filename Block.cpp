@@ -65,6 +65,20 @@ void Block::Draw(Shader& shader)
     vao->Unbind();
 }
 
+Block::Block(glm::vec3 position, float size, glm::vec3 rgb, BlockType blockType)
+{
+    this->position = position;
+    this->size = size;
+    this->rgb = rgb;
+    this->blockType = blockType;
+    damping = 0.99f;
+    mass = 1.0f;
+    gravity = glm::vec3(0, -2.81f, 0);
+    bounciness = 0.8f;
+    velocity = glm::vec3(0, 0,0);
+    previousPosition = position;
+}
+
 Block::~Block()
 {
     vao->Delete();

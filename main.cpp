@@ -23,7 +23,7 @@ Shader* shader;
 Camera* camera;
 World* world;
 
-void draw()
+void draw(float deltaTime)
 {
 	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -92,9 +92,9 @@ int main()
 		float currentFrameTime = glfwGetTime();
 		float deltaTime = currentFrameTime - lastFrame;
 		lastFrame = currentFrameTime;
-		draw();
+		draw(deltaTime);
 		camera->Update(window, deltaTime);
-
+		world->Update(deltaTime);
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
