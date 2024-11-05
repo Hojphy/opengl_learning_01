@@ -19,6 +19,8 @@ class World
 		void Update(float deltaTime, Camera* camera);
 		void LClickPress(Camera* camera);
 		void LClickRelease();
+		bool RayIntersectsAABB(const glm::vec3& rayOrigin, const glm::vec3& rayDirection,
+			const glm::vec3& boxMin, const glm::vec3& boxMax, float maxDistance);
 		
 		Block* InFrontOfCamera(Camera* camera);
 

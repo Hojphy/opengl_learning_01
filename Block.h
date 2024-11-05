@@ -21,7 +21,6 @@ class Block
 public:
 	glm::vec3 previousPosition;
 	glm::vec3 position;
-	glm::vec3 rgb;
 	glm::vec3 velocity;
 	
 	glm::vec3 gravity;
@@ -38,11 +37,13 @@ public:
 	
 	void Initialize();
 	void Draw(Shader& shader);
+	void SetRGB(glm::vec3 rgb);
+	glm::vec3 GetRGB();
 private:
 	VAO* vao;
 	VBO* vbo;
 	EBO* ebo;
-
+	glm::vec3 m_rgb;
 };
 
 #endif

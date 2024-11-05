@@ -3,14 +3,14 @@
 void Block::Initialize()
 {
     GLfloat vertices[] = {
-        -0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f, 1.0f, // Bottom-left-back, red
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f, 0.0f, 1.0f, // Bottom-right-back, green
-         0.5f,  0.5f, -0.5f,  0.0f, 0.0f, 1.0f, 1.0f, // Top-right-back, blue
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f, 0.0f, 1.0f, // Top-left-back, yellow
-        -0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 1.0f, 1.0f, // Bottom-left-front, magenta
-         0.5f, -0.5f,  0.5f,  0.0f, 1.0f, 1.0f, 1.0f, // Bottom-right-front, cyan
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, 1.0f, 1.0f, // Top-right-front, white
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f, 0.0f, 1.0f  // Top-left-front, black
+        -0.5f, -0.5f, -0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f, // Bottom-left-back, red
+         0.5f, -0.5f, -0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f, // Bottom-right-back, green
+         0.5f,  0.5f, -0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f, // Top-right-back, blue
+        -0.5f,  0.5f, -0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f, // Top-left-back, yellow
+        -0.5f, -0.5f,  0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f, // Bottom-left-front, magenta
+         0.5f, -0.5f,  0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f, // Bottom-right-front, cyan
+         0.5f,  0.5f,  0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f, // Top-right-front, white
+        -0.5f,  0.5f,  0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f  // Top-left-front, black
     };
 
     GLuint indices[] = {
@@ -58,18 +58,33 @@ void Block::Draw(Shader& shader)
     glm::mat4 model = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f), glm::vec3(size));
 
     glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-    glUniform4f(glGetUniformLocation(shader.ID, "color"), rgb.x, rgb.y, rgb.z, 1.0f);
+    glUniform4f(glGetUniformLocation(shader.ID, "color"), m_rgb.x, m_rgb.y, m_rgb.z, 1.0f);
 
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
     vao->Unbind();
 }
 
+glm::vec3 Block::GetRGB()
+{
+    return m_rgb;
+}
+
+void Block::SetRGB(glm::vec3 rgb)
+{
+    if (rgb != m_rgb)
+    {
+        m_rgb = rgb;
+        Initialize();
+    }
+    
+}
+
 Block::Block(glm::vec3 position, float size, glm::vec3 rgb, BlockType blockType)
 {
     this->position = position;
     this->size = size;
-    this->rgb = rgb;
+    this->m_rgb = rgb;
     this->blockType = blockType;
     damping = 0.99f;
     mass = 1.0f;

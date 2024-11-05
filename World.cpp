@@ -34,13 +34,26 @@ void World::Update(float deltaTime, Camera* camera)
 	{
 		if (block->blockType == PHYSICS)
 		{
+			if (InFrontOfCamera(camera))
+			{
+				block->SetRGB(glm::vec3(1, 1, 0));
+			}
+			else
+			{
+				block->SetRGB(glm::vec3(1, 1, 1));
+			}
 			if (selectedBlock)
 			{
 				if (block.get() == selectedBlock)
 				{
+					block->SetRGB(glm::vec3(0.5, 0.5, 0));
 					block->position = camera->position + camera->Front() * 2.0f;
 					block->previousPosition = block->position;
 					continue;
+				}
+				else
+				{
+					block->SetRGB(glm::vec3(1, 1, 1));
 				}
 			}
 			if (moveBlock)
@@ -53,7 +66,6 @@ void World::Update(float deltaTime, Camera* camera)
 			glm::vec3 newPosition = block->position + (block->position - block->previousPosition) + acceleration * deltaTime * deltaTime;
 			block->previousPosition = block->position;
 			block->position = newPosition;
-			//std::cout << block->position.y << "\n";
 			for (const auto& block2 : m_blocks)
 			{
 				if (block == block2) continue;
@@ -99,24 +111,48 @@ void World::CreateCube(float x, float y, float z, float size, glm::vec3 rgb, Blo
 
 Block* World::InFrontOfCamera(Camera* camera)
 {
+	const float maxDistance = 5.0f;
+	glm::vec3 origin = camera->position;
+	glm::vec3 direction = camera->Front();
 	for (const auto& block : m_blocks)
 	{
+		if (block->blockType != PHYSICS) continue;
 		const unsigned int range = 5;
 		for (float i = 1; i <= range; i++)
 		{
 			float halfSize = block->size / 2;
-			glm::vec3 cameraPos = camera->position + (camera->Front() * i);
-			std::cout << cameraPos.x << cameraPos.y << cameraPos.z << "\n";
-			if (block->position.x + halfSize >= cameraPos.x &&
-				block->position.x - halfSize <= cameraPos.x &&
-				block->position.z + halfSize >= cameraPos.z && 
-				block->position.z - halfSize <= cameraPos.z &&
-				block->position.y + halfSize >= cameraPos.y &&
-				block->position.y - halfSize <= cameraPos.y)
+			glm::vec3 blockMin = block->position - glm::vec3(halfSize);
+			glm::vec3 blockMax = block->position + glm::vec3(halfSize);
+			if (RayIntersectsAABB(origin, direction, blockMin, blockMax, maxDistance))
 			{
 				return block.get();
 			}
 		}
 	}
 	return nullptr;
+}
+
+bool World::RayIntersectsAABB(const glm::vec3& rayOrigin, const glm::vec3& rayDirection,
+	const glm::vec3& boxMin, const glm::vec3& boxMax, float maxDistance)
+{
+	float tmin = 0.0f;
+	float tmax = maxDistance;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		float invD = 1 / rayDirection[i];
+		float t0 = (boxMin[i] - rayOrigin[i]) * invD;
+		float t1 = (boxMax[i] - rayOrigin[i]) * invD;
+
+		if (invD < 0.0f)
+			std::swap(t0, t1);
+
+		tmin = (t0 > tmin) ? t0 : tmin;
+		tmax = (t1 < tmax) ? t1 : tmax;
+
+		if (tmin > tmax || tmax < 0)
+			return false;
+	}
+
+	return true;
 }
