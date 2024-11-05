@@ -34,10 +34,14 @@ void World::Update(float deltaTime, Camera* camera)
 	{
 		if (block->blockType == PHYSICS)
 		{
-			if (selectedBlock && block.get() == selectedBlock)
+			if (selectedBlock)
 			{
-				block->position = camera->position + camera->Front() * 2.0f;
-				continue;
+				if (block.get() == selectedBlock)
+				{
+					block->position = camera->position + camera->Front() * 2.0f;
+					block->previousPosition = block->position;
+					continue;
+				}
 			}
 			if (moveBlock)
 			{
@@ -49,6 +53,7 @@ void World::Update(float deltaTime, Camera* camera)
 			glm::vec3 newPosition = block->position + (block->position - block->previousPosition) + acceleration * deltaTime * deltaTime;
 			block->previousPosition = block->position;
 			block->position = newPosition;
+			//std::cout << block->position.y << "\n";
 			for (const auto& block2 : m_blocks)
 			{
 				if (block == block2) continue;
@@ -100,8 +105,14 @@ Block* World::InFrontOfCamera(Camera* camera)
 		for (float i = 1; i <= range; i++)
 		{
 			float halfSize = block->size / 2;
-			glm::vec3 cameraPos = camera->position + camera->Front() * i;
-			if (block->position == cameraPos)
+			glm::vec3 cameraPos = camera->position + (camera->Front() * i);
+			std::cout << cameraPos.x << cameraPos.y << cameraPos.z << "\n";
+			if (block->position.x + halfSize >= cameraPos.x &&
+				block->position.x - halfSize <= cameraPos.x &&
+				block->position.z + halfSize >= cameraPos.z && 
+				block->position.z - halfSize <= cameraPos.z &&
+				block->position.y + halfSize >= cameraPos.y &&
+				block->position.y - halfSize <= cameraPos.y)
 			{
 				return block.get();
 			}
