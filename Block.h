@@ -33,6 +33,11 @@ public:
 	BlockType blockType;
 	
 	Block(glm::vec3 position, float size, glm::vec3 rgb, BlockType blockType);
+	Block()
+		: position(0.0f), size(1.0f), m_rgb(1.0f, 1.0f, 1.0f), blockType(SOLID),
+		damping(0.99f), mass(1.0f), gravity(0.0f, -9.81f, 0.0f),
+		bounciness(0.8f), velocity(0.0f), previousPosition(0.0f) {}
+
 	~Block();
 	
 	void Initialize();

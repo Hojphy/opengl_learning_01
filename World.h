@@ -24,11 +24,10 @@ class World
 			const glm::vec3& boxMin, const glm::vec3& boxMax, float maxDistance);
 		
 		Block* InFrontOfCamera(Camera* camera);
-
+		std::vector<std::unique_ptr<Block>> m_blocks;
 		bool moveBlock;
 		Block* selectedBlock;
 	private:
-		std::vector<std::unique_ptr<Block>> m_blocks;
 		void CreateCube(float x, float y, float z, float size, glm::vec3 rgb, BlockType blockType);
 };
 

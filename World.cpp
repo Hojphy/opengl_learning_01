@@ -1,4 +1,5 @@
 #include "World.h"
+#include "Physics.h"
 
 void World::Initialize()
 {
@@ -10,6 +11,7 @@ void World::Initialize()
 			CreateCube(x, -2.0f, z, 1.0f, glm::vec3(fabs(x), 0.5f, fabs(z)), SOLID);
 		}
 	}
+	CreateCube(5, -2.0f, 0, 1.0f, glm::vec3(0.5f, 0.5f, 0.5f), SOLID);
 	for (int x = -1; x <= 1; x++)
 	{
 		for (int z = -1; z <= 1; z++)
@@ -34,27 +36,19 @@ void World::Update(float deltaTime, Camera* camera)
 	{
 		if (block->blockType == PHYSICS)
 		{
-			if (InFrontOfCamera(camera) && block.get() == InFrontOfCamera(camera))
+			if (!selectedBlock && InFrontOfCamera(camera) && block.get() == InFrontOfCamera(camera))
 			{
 				block->SetRGB(glm::vec3(1, 1, 0));
 			}
-			else
+			else if(!selectedBlock)
 			{
 				block->SetRGB(glm::vec3(1, 1, 1));
 			}
-			if (selectedBlock && selectedBlock == InFrontOfCamera(camera))
+			if (selectedBlock)
 			{
-				if (block.get() == selectedBlock && block.get() == InFrontOfCamera(camera))
-				{
-					block->SetRGB(glm::vec3(0.5, 0.5, 0));
-					block->position = camera->position + camera->Front() * 2.0f;
-					block->previousPosition = block->position;
-					continue;
-				}
-				else
-				{
-					block->SetRGB(glm::vec3(1, 1, 1));
-				}
+					selectedBlock->SetRGB(glm::vec3(0.5, 0.5, 0));
+					selectedBlock->position = camera->position + camera->Front() * 2.0f;
+					selectedBlock->previousPosition = selectedBlock->position;
 			}
 			if (moveBlock)
 			{
@@ -66,24 +60,7 @@ void World::Update(float deltaTime, Camera* camera)
 			glm::vec3 newPosition = block->position + (block->position - block->previousPosition) + acceleration * deltaTime * deltaTime;
 			block->previousPosition = block->position;
 			block->position = newPosition;
-			for (const auto& block2 : m_blocks)
-			{
-				if (block == block2) continue;
-				float halfSize = block->size/2;
-
-				float minY = block2->position.y - halfSize + 0.5f;
-				float maxY = block2->position.y + halfSize + 0.5f;
-				if (block->position.x <= block2->position.x + halfSize &&
-					block->position.x >= block2->position.x - halfSize &&
-					block->position.z <= block2->position.z + halfSize &&
-					block->position.z >= block2->position.z - halfSize &&
-					block->position.y <= maxY && block->position.y >= minY)
-				{
-					block->position.y = block2->position.y + 1;
-					block->previousPosition.y = block2->position.y + 1;
-					break;
-				}
-			}
+			Physics::UpdateCollision(this, block.get());
 		}
 	}
 }
