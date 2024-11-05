@@ -135,6 +135,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 	{
 		world->LClickRelease();
 	}
+	else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	{
+		world->RClickPress(camera);
+	}
 }
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)

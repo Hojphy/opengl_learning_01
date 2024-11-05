@@ -34,7 +34,7 @@ void World::Update(float deltaTime, Camera* camera)
 	{
 		if (block->blockType == PHYSICS)
 		{
-			if (InFrontOfCamera(camera))
+			if (InFrontOfCamera(camera) && block.get() == InFrontOfCamera(camera))
 			{
 				block->SetRGB(glm::vec3(1, 1, 0));
 			}
@@ -42,9 +42,9 @@ void World::Update(float deltaTime, Camera* camera)
 			{
 				block->SetRGB(glm::vec3(1, 1, 1));
 			}
-			if (selectedBlock)
+			if (selectedBlock && selectedBlock == InFrontOfCamera(camera))
 			{
-				if (block.get() == selectedBlock)
+				if (block.get() == selectedBlock && block.get() == InFrontOfCamera(camera))
 				{
 					block->SetRGB(glm::vec3(0.5, 0.5, 0));
 					block->position = camera->position + camera->Front() * 2.0f;
@@ -100,6 +100,12 @@ void World::LClickPress(Camera* camera)
 void World::LClickRelease()
 {
 	selectedBlock = nullptr;
+}
+
+void World::RClickPress(Camera* camera)
+{
+	glm::vec3 pos = camera->position + camera->Front() * 2.0f;
+	CreateCube(pos.x, pos.y, pos.z, 1.0f, glm::vec3(1,1,1), PHYSICS);
 }
 
 void World::CreateCube(float x, float y, float z, float size, glm::vec3 rgb, BlockType blockType)
