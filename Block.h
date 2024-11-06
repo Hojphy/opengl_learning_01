@@ -30,6 +30,8 @@ public:
 	float bounciness;
 	float damping;
 
+	bool grounded;
+
 	BlockType blockType;
 	
 	Block(glm::vec3 position, float size, glm::vec3 rgb, BlockType blockType);
