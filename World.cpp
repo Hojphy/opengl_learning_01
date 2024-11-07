@@ -60,13 +60,10 @@ void World::Update(float deltaTime, Camera* camera)
 				block->previousPosition.y = block->position.y + 1.0f;
 				block->position.y += 1.0f;
 			}
-			if (!block->grounded)
-			{
-				glm::vec3 acceleration = block->gravity;
-				glm::vec3 newPosition = block->position + (block->position - block->previousPosition) + acceleration * deltaTime * deltaTime;
-				block->previousPosition = block->position;
-				block->position = newPosition;
-			}
+			glm::vec3 acceleration = block->gravity;
+			glm::vec3 newPosition = block->position + (block->position - block->previousPosition) + acceleration * deltaTime * deltaTime;
+			block->previousPosition = block->position;
+			block->position = newPosition;
 			Physics::UpdateCollision(this, block.get());
 		}
 	}
