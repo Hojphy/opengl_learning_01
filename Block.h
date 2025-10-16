@@ -6,8 +6,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "vao.h"
-#include "ebo.h"
+#include "VAO.h"
+#include "EBO.h"
 #include "shaderClass.h"
 
 enum BlockType
@@ -32,11 +32,16 @@ public:
 
 	BlockType blockType;
 	
-	Block(glm::vec3 position, float size, glm::vec3 rgb, BlockType blockType);
+	Block(glm::vec3 position, float size, glm::vec3 rgb, BlockType blockType)
+		: previousPosition(position), position(position), velocity(0.0f),
+		   size(size), mass(1.0f), bounciness(0.8f), damping(0.99f),
+		   blockType(blockType), gravity(0.0f, -9.81f, 0.0f),
+		   vao(nullptr), vbo(nullptr), ebo(nullptr), m_rgb(rgb) {}
 	Block()
 		: position(0.0f), size(1.0f), m_rgb(1.0f, 1.0f, 1.0f), blockType(SOLID),
-		damping(0.99f), mass(1.0f), gravity(0.0f, -9.81f, 0.0f),
-		bounciness(0.8f), velocity(0.0f), previousPosition(0.0f) {}
+		   damping(0.99f), mass(1.0f), gravity(0.0f, -9.81f, 0.0f),
+		   bounciness(0.8f), velocity(0.0f), previousPosition(0.0f),
+		   vao(nullptr), vbo(nullptr), ebo(nullptr) {}
 
 	~Block();
 	

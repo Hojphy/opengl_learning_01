@@ -31,40 +31,40 @@ void World::Render(Shader& shader)
 
 void World::Update(float deltaTime, Camera* camera)
 {
-	for (const auto& block : m_blocks)
+	for (size_t i = 0; i < m_blocks.size(); i++)
 	{
-		if (block->blockType == PHYSICS)
+		if (m_blocks[i]->blockType == PHYSICS)
 		{
-			if (!selectedBlock && InFrontOfCamera(camera) && block.get() == InFrontOfCamera(camera))
+			if (selectedBlockIdx == -1 && InFrontOfCamera(camera) == -1 && i == InFrontOfCamera(camera))
 			{
-				block->SetRGB(glm::vec3(1, 1, 0));
+				m_blocks[i]->SetRGB(glm::vec3(1, 1, 0));
 				selectedBlockDistance = -1;
 			}
-			else if (!selectedBlock)
+			else if (selectedBlockIdx == -1)
 			{
-				block->SetRGB(glm::vec3(1, 1, 1));
+				m_blocks[i]->SetRGB(glm::vec3(1, 1, 1));
 				selectedBlockDistance = -1;
 			}
-			if (selectedBlock)
+			if (selectedBlockIdx != -1)
 			{
 				if (selectedBlockDistance == -1)
 				{
-					selectedBlockDistance = sqrt(pow(selectedBlock->position.x - camera->position.x, 2) + pow(selectedBlock->position.y - camera->position.y, 2) + pow(selectedBlock->position.z - camera->position.z, 2));
+					selectedBlockDistance = sqrt(pow(m_blocks[selectedBlockIdx]->position.x - camera->position.x, 2) + pow(m_blocks[selectedBlockIdx]->position.y - camera->position.y, 2) + pow(m_blocks[selectedBlockIdx]->position.z - camera->position.z, 2));
 				}
-				selectedBlock->SetRGB(glm::vec3(0.5, 0.5, 0));
-				selectedBlock->position = camera->position + camera->Front() * selectedBlockDistance;
-				selectedBlock->previousPosition = selectedBlock->position;
+				m_blocks[selectedBlockIdx]->SetRGB(glm::vec3(0.5, 0.5, 0));
+				m_blocks[selectedBlockIdx]->position = camera->position + camera->Front() * selectedBlockDistance;
+				m_blocks[selectedBlockIdx]->previousPosition = m_blocks[selectedBlockIdx]->position;
 			}
 			if (moveBlock)
 			{
-				block->previousPosition.y = block->position.y + 1.0f;
-				block->position.y += 1.0f;
+				m_blocks[i]->previousPosition.y = m_blocks[i]->position.y + 1.0f;
+				m_blocks[i]->position.y += 1.0f;
 			}
-			glm::vec3 acceleration = block->gravity;
-			glm::vec3 newPosition = block->position + (block->position - block->previousPosition) + acceleration * deltaTime * deltaTime;
-			block->previousPosition = block->position;
-			block->position = newPosition;
-			Physics::UpdateCollision(this, block.get());
+			glm::vec3 acceleration = m_blocks[i]->gravity;
+			glm::vec3 newPosition = m_blocks[i]->position + (m_blocks[i]->position - m_blocks[i]->previousPosition) + acceleration * deltaTime * deltaTime;
+			m_blocks[i]->previousPosition = m_blocks[i]->position;
+			m_blocks[i]->position = newPosition;
+			Physics::UpdateCollision(this, m_blocks[i].get());
 		}
 	}
 	moveBlock = false;
@@ -72,16 +72,16 @@ void World::Update(float deltaTime, Camera* camera)
 
 void World::LClickPress(Camera* camera)
 {
-	Block* inFrontOfCamera = InFrontOfCamera(camera);
-	if (inFrontOfCamera)
+	int inFrontOfCamera = InFrontOfCamera(camera);
+	if (inFrontOfCamera!=-1)
 	{
-		selectedBlock = inFrontOfCamera;
+		selectedBlockIdx = inFrontOfCamera;
 	}
 }
 
 void World::LClickRelease()
 {
-	selectedBlock = nullptr;
+	selectedBlockIdx = -1;
 }
 
 void World::RClickPress(Camera* camera)
@@ -97,11 +97,12 @@ void World::CreateCube(float x, float y, float z, float size, glm::vec3 rgb, Blo
 	m_blocks.push_back(std::move(block));
 }
 
-Block* World::InFrontOfCamera(Camera* camera)
+int World::InFrontOfCamera(Camera* camera)
 {
 	const float maxDistance = 5.0f;
 	glm::vec3 origin = camera->position;
 	glm::vec3 direction = camera->Front();
+	Block* blok;
 	for (const auto& block : m_blocks)
 	{
 		if (block->blockType != PHYSICS) continue;
@@ -112,11 +113,20 @@ Block* World::InFrontOfCamera(Camera* camera)
 			glm::vec3 blockMax = block->position + glm::vec3(halfSize);
 			if (RayIntersectsAABB(origin, direction, blockMin, blockMax, maxDistance))
 			{
-				return block.get();
+				blok = block.get();
+				break;
 			}
+			if(blok) break;
 		}
 	}
-	return nullptr;
+	if (blok) {
+	    for (size_t i = 0; i < m_blocks.size(); ++i) {
+		if (m_blocks[i].get() == blok) {
+		    return (int)i;
+		}
+	    }
+	}
+	return -1;
 }
 
 bool World::RayIntersectsAABB(const glm::vec3& rayOrigin, const glm::vec3& rayDirection,

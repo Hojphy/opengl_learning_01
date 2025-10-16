@@ -24,10 +24,10 @@ class World
 		bool RayIntersectsAABB(const glm::vec3& rayOrigin, const glm::vec3& rayDirection,
 			const glm::vec3& boxMin, const glm::vec3& boxMax, float maxDistance);
 		
-		Block* InFrontOfCamera(Camera* camera);
+		int InFrontOfCamera(Camera* camera);
 		std::vector<std::unique_ptr<Block>> m_blocks;
-		bool moveBlock;
-		Block* selectedBlock;
+		bool moveBlock = false;
+		int selectedBlockIdx = -1;
 		float selectedBlockDistance;
 	private:
 		void CreateCube(float x, float y, float z, float size, glm::vec3 rgb, BlockType blockType);

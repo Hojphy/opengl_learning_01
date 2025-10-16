@@ -1,29 +1,38 @@
 	#include "VAO.h"
 
-	VAO::VAO()
+	VAO::VAO() : ID(0), supported(false)
 	{
+	    if (glGenVertexArrays) {
 		glGenVertexArrays(1, &ID);
+		supported = true;
+	    } else {
+		ID = 0; // or some invalid flag
+		supported = false;
+	    }
 	}
 
-	void VAO::LinkVBO(VBO vbo, GLuint layout)
+	void VAO::LinkVBO(VBO& vbo, GLuint layout)
 	{
-		vbo.Bind();
-		glVertexAttribPointer(layout, layout == 0 ? 3 : 4, GL_FLOAT, GL_FALSE, 7 *sizeof(float), (void*)(layout == 0 ? 0 : 3 * sizeof(float)));
-		glEnableVertexAttribArray(layout);
-		vbo.Unbind();
+		if(supported)
+		{
+			vbo.Bind();
+			glVertexAttribPointer(layout, layout == 0 ? 3 : 4, GL_FLOAT, GL_FALSE, 7 *sizeof(float), (void*)(layout == 0 ? 0 : 3 * sizeof(float)));
+			glEnableVertexAttribArray(layout);
+			vbo.Unbind();
+		}
 	}
 
 	void VAO::Bind()
 	{
-		glBindVertexArray(ID);
+		if(supported) glBindVertexArray(ID);
 	}
 
 	void VAO::Unbind()
 	{
-		glBindVertexArray(0);
+		if(supported) glBindVertexArray(0);
 	}
 
 	void VAO::Delete()
 	{
-		glDeleteVertexArrays(1, &ID);
+		if(supported) glDeleteVertexArrays(1, &ID);
 	}

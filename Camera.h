@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <GLFW\glfw3.h>
+#include <GLFW/glfw3.h>
 
 class Camera
 {

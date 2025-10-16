@@ -1,7 +1,14 @@
 #include "Block.h"
 
+#define GLCheckError() { GLenum err; while((err = glGetError()) != GL_NO_ERROR) \
+std::cerr << "OpenGL error: " << err << " at line " << __LINE__ << std::endl; }
+
 void Block::Initialize()
 {
+    if (vao) { vao->Delete(); delete vao; vao = nullptr; }
+    if (vbo) { vbo->Delete(); delete vbo; vbo = nullptr; }
+    if (ebo) { ebo->Delete(); delete ebo; ebo = nullptr; }
+
     GLfloat vertices[] = {
         -0.5f, -0.5f, -0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f, // Bottom-left-back, red
          0.5f, -0.5f, -0.5f,  m_rgb.x, m_rgb.y, m_rgb.z, 1.0f, // Bottom-right-back, green
@@ -38,14 +45,17 @@ void Block::Initialize()
     vbo = new VBO(vertices, sizeof(vertices));
     ebo = new EBO(indices, sizeof(indices));
 
-    vao->Bind();
+    if(vao && vao->supported) vao->Bind();
     vbo->Bind();
     ebo->Bind();
 
-    vao->LinkVBO(*vbo, 0);
-    vao->LinkVBO(*vbo, 1);
+    if(vao->supported)
+    {
+	    vao->LinkVBO(*vbo, 0);
+	    vao->LinkVBO(*vbo, 1);
 
-    vao->Unbind();
+	    vao->Unbind();
+    }
     vbo->Unbind();
     ebo->Unbind();
 }
@@ -53,16 +63,32 @@ void Block::Initialize()
 void Block::Draw(Shader& shader)
 {
     shader.Activate();
-    vao->Bind();
+    if (vao && vao->supported) {
+        vao->Bind();
+    } else {
+        vbo->Bind();
+        ebo->Bind();
+
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(0);
+
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 7 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+    }
 
     glm::mat4 model = glm::translate(glm::mat4(1.0f), position) * glm::scale(glm::mat4(1.0f), glm::vec3(size));
 
-    glUniformMatrix4fv(glGetUniformLocation(shader.ID, "model"), 1, GL_FALSE, glm::value_ptr(model));
-    glUniform4f(glGetUniformLocation(shader.ID, "color"), m_rgb.x, m_rgb.y, m_rgb.z, 1.0f);
+    GLint modelLoc = glGetUniformLocation(shader.ID, "model");
+    if (modelLoc != -1)
+    	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+
+    GLint colorLoc = glGetUniformLocation(shader.ID, "color");
+    if (colorLoc != -1)
+    	glUniform4f(colorLoc, m_rgb.x, m_rgb.y, m_rgb.z, 1.0f);
 
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
-    vao->Unbind();
+    if(vao && vao->supported) vao->Unbind();
 }
 
 glm::vec3 Block::GetRGB()
@@ -80,26 +106,9 @@ void Block::SetRGB(glm::vec3 rgb)
     
 }
 
-Block::Block(glm::vec3 position, float size, glm::vec3 rgb, BlockType blockType)
-{
-    this->position = position;
-    this->size = size;
-    this->m_rgb = rgb;
-    this->blockType = blockType;
-    damping = 0.99f;
-    mass = 1.0f;
-    gravity = glm::vec3(0, -9.81f, 0);
-    bounciness = 0.8f;
-    velocity = glm::vec3(0, 0,0);
-    previousPosition = position;
-}
-
 Block::~Block()
 {
-    vao->Delete();
-    vbo->Delete();
-    ebo->Delete();
-    delete vao;
-    delete vbo;
-    delete ebo;
+	if (vao) { vao->Delete(); delete vao; vao = nullptr; }
+	if (vbo) { vbo->Delete(); delete vbo; vbo = nullptr; }
+	if (ebo) { ebo->Delete(); delete ebo; ebo = nullptr; }
 }
